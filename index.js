@@ -58,12 +58,29 @@ io.on("connection", socket => {
         //     }
         // }
     });
-
+    // 主播断开连接
+    socket.on("offLink", data => {
+        console.log("主播断开连接", data)
+        // v1.end();
+    })
     //客户端断开连接
-    socket.on("disconnecting", function(socket) {
+    socket.on("disconnecting", function (socket) {
         console.log("断开", socket);
-        // ws.end();
     });
 });
-server.listen(1337, "192.168.0.184");
-app.listen(8085, "192.168.0.184");
+//获取本机ip地址
+function getIPAdress() {
+    var interfaces = require("os").networkInterfaces();
+    console.log(interfaces)
+    for (var devName in interfaces) {
+        var iface = interfaces[devName];
+        for (var i = 0; i < iface.length; i++) {
+            var alias = iface[i];
+            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+                return alias.address;
+            }
+        }
+    }
+}
+server.listen(1337, getIPAdress());
+app.listen(8085, getIPAdress());
