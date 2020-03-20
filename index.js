@@ -11,21 +11,35 @@ let userList = []; //客户端链接id
 let anchor = []; //视频主播id
 
 io.on("connection", socket => {
-    let v1
-    // 发送链接者的id
-    socket.emit("socketId", { data: socket.id });
-    // 存储视频主播id
-    socket.on("anchor", id => {
-        anchor[0] = id;
-        console.log(anchor[0], "anchor");
-        v1 = fs.createWriteStream(`./${anchor[0]}.mp4`)
-    });
     // 存储所有连接着id
     userList = Object.keys(socket.adapter.rooms);
     console.log("链接", userList, socket.id);
-    // let v1 = fs.createReadStream("./video2.mp4"); //读取流
+    userList.forEach((e) => {
+        socket.to(e).emit("socketId", {
+            data: 123
+        })
+    })
+    // socket.to("socket.id").emit("socketId", {
+    //     data: [
+    //         {
+    //             // my: socket.id,
+    //             user: userList.filter(e => {
+    //                 return e !== socket.id;
+    //             })
+    //         }
+    //     ]
+    // });
+
+    let v1;
+    // 存储视频主播id
+    socket.on("anchor", id => {
+        anchor[0] = id;
+        // console.log(anchor[0], "anchor");
+        v1 = fs.createWriteStream(`./viedo2.mp4`);
+    });
+    // let v2 = fs.createReadStream("./zxy.mov"); //读取流
     // setTimeout(() => {
-    //     v1.on("data", chunc => {
+    //     v2.on("data", chunc => {
     //         console.log(chunc);
     //         socket.emit("sendVideo", { data: chunc });
     //     });
@@ -39,7 +53,7 @@ io.on("connection", socket => {
         // }
         // videoData[1] = data;
         v1.write(data);
-        console.log("接收视频流", data);
+        // console.log("接收视频流", data);
         videoData.push(data);
         // for (let i = 0; i < userList.length; i++) {
         //     if (userList[i] !== anchor[0]) {
@@ -60,27 +74,31 @@ io.on("connection", socket => {
     });
     // 主播断开连接
     socket.on("offLink", data => {
-        console.log("主播断开连接", data)
+        console.log("主播断开连接", data);
         // v1.end();
-    })
+    });
     //客户端断开连接
-    socket.on("disconnecting", function (socket) {
+    socket.on("disconnecting", socket => {
         console.log("断开", socket);
     });
 });
 //获取本机ip地址
 function getIPAdress() {
     var interfaces = require("os").networkInterfaces();
-    console.log(interfaces)
+    // console.log(interfaces)
     for (var devName in interfaces) {
         var iface = interfaces[devName];
         for (var i = 0; i < iface.length; i++) {
             var alias = iface[i];
-            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+            if (
+                alias.family === "IPv4" &&
+                alias.address !== "127.0.0.1" &&
+                !alias.internal
+            ) {
                 return alias.address;
             }
         }
     }
 }
-server.listen(1337, getIPAdress());
-app.listen(8085, getIPAdress());
+server.listen(1337, "192.168.0.184");
+app.listen(8085, "192.168.0.184");
