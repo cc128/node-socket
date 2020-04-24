@@ -7,29 +7,14 @@ const server = require("http").Server(app.callback());
 const io = require("socket.io")(server);
 
 let videoData = []; //视频流
-let userList = []; //客户端链接id
 let anchor = []; //视频主播id
 
 io.on("connection", socket => {
-    // 存储所有连接着id
-    userList = Object.keys(socket.adapter.rooms);
-    console.log("链接", userList, socket.id);
-    userList.forEach((e) => {
-        socket.to(e).emit("socketId", {
-            data: 123
-        })
-    })
-    // socket.to("socket.id").emit("socketId", {
-    //     data: [
-    //         {
-    //             // my: socket.id,
-    //             user: userList.filter(e => {
-    //                 return e !== socket.id;
-    //             })
-    //         }
-    //     ]
-    // });
-
+    socket.on("userLink", data => {
+        socket.join(data);
+        console.log(`${socket.id}已链接`, `共有${getLinkUser(socket)}`);
+        io.emit("userList", getLinkUser(socket));
+    });
     let v1;
     // 存储视频主播id
     socket.on("anchor", id => {
@@ -55,33 +40,23 @@ io.on("connection", socket => {
         v1.write(data);
         // console.log("接收视频流", data);
         videoData.push(data);
-        // for (let i = 0; i < userList.length; i++) {
-        //     if (userList[i] !== anchor[0]) {
-        //         if (isOne) {
-        //             for (k = 0; k < videoData.length; k++) {
-        //                 socket
-        //                     .to(userList[i])
-        //                     .emit("sendVideo", { data: videoData[k] });
-        //             }
-        //             console.log(anchor[0], 11111);
-        //             isOne = false;
-        //         } else {
-        //             console.log(isOne, 2222);
-        //             socket.to(userList[i]).emit("sendVideo", { data: data });
-        //         }
-        //     }
-        // }
     });
     // 主播断开连接
     socket.on("offLink", data => {
-        console.log("主播断开连接", data);
+        socket.leave(data);
+        io.emit("userList", getLinkUser(socket));
+        console.log(`${data}离开了`, `还剩下${getLinkUser(socket)}`);
         // v1.end();
     });
     //客户端断开连接
-    socket.on("disconnecting", socket => {
-        console.log("断开", socket);
+    socket.on("disconnect", socket => {
+        console.log("用户已断开", socket);
     });
 });
+//获取链接用户
+const getLinkUser = socket => {
+    return Object.keys(socket.adapter.rooms);
+};
 //获取本机ip地址
 function getIPAdress() {
     var interfaces = require("os").networkInterfaces();
