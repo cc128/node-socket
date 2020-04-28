@@ -24,19 +24,33 @@ io.on("connection", socket => {
     socket.on("sendCall", data => {
         // 给被呼叫人发消息
         socket.to(data.called).emit("showCall", { ...data });
-        console.log(`被呼叫用户${data.called},呼叫用户${data.callId}`);
+        // console.log(`被呼叫用户${data.called},呼叫用户${data.callId}`);
+    });
+    // 主动挂断呼叫
+    socket.on("initiativeOverCall", data => {
+        socket.emit("secretMsg", { isConsent: false });
     });
     // 挂断呼叫
     socket.on("overCall", data => {
-        console.log(`挂断对${data.called}呼叫`);
-        socket.to(data.callId).emit(data.callId, { ...data, isConsent: false });
+        socket.emit("secretMsg", { isConsent: false });
+        if (data.state === 1) {
+            // 呼叫方挂断
+            socket.to(data.called).emit("secretMsg", { isConsent: false });
+        } else if (data.state === 2) {
+            // 被呼叫方挂断
+            socket.to(data.callId).emit("secretMsg", { isConsent: false });
+        }
     });
     //接受呼叫
     socket.on("tokeCall", data => {
         console.log(`接受${data.callId}呼叫`);
-        socket.to(data.callId).emit(data.callId, { ...data, isConsent: true });
+        socket.emit("secretMsg", { isConsent: true, sendVideoId: data.callId });
+        socket.to(data.callId).emit("secretMsg", {
+            isConsent: true,
+            sendVideoId: data.called
+        });
     });
-    // 接受客户端发来的视频消息
+    // 接收客户端发来的视频消息
     socket.on("videoStreaming", data => {
         // 发送视频流给被呼叫人
         console.log(`接收并发送视频流给${data.receiveUserId}`);
@@ -93,5 +107,5 @@ function getIPAdress() {
         }
     }
 }
-server.listen(1337, "192.168.0.184");
-app.listen(8085, "192.168.0.184");
+server.listen(7005, "0.0.0.0");
+// app.listen(8085, "192.168.0.184");
