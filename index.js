@@ -8,17 +8,22 @@ const io = require("socket.io")(server);
 
 let videoData = []; //视频流
 let anchor = []; //视频主播id
-
+let userMsg = {};
 io.on("connection", socket => {
     socket.emit("socketId", socket.id);
-    console.log(`${socket.id}已链接`, `共有${getLinkUser(socket)}`);
     //链接用户
     socket.on("userLink", data => {
-        if (data) {
-            socket.join(data);
-        }
-        console.log(`${socket.id}已链接`, `共有${getLinkUser(socket)}`);
-        io.emit("userList", getLinkUser(socket));
+        // if (data) {
+        //     socket.join(data);
+        // }
+        userMsg[data.name] = data.socketId;
+        // console.log(`${socket.id}已链接`, `共有${getLinkUser(socket)}`);
+        console.log(userMsg, getLinkUser(socket));
+        // Object.keys(userMsg).forEach(e => {
+
+        // })
+
+        io.emit("userList", filterUser(socket, userMsg));
     });
     // 启动呼叫
     socket.on("sendCall", data => {
@@ -82,9 +87,21 @@ io.on("connection", socket => {
     });
     //客户端断开连接
     socket.on("disconnect", socket => {
+        // io.emit("userList", filterUser);
         console.log("用户已断开", socket);
     });
 });
+const filterUser = (socket, userMsg) => {
+    let arr = [];
+    getLinkUser(socket).forEach(e => {
+        Object.values(userMsg).forEach((q, i) => {
+            if (e === q) {
+                arr.push(Object.keys(userMsg)[i]);
+            }
+        });
+    });
+    return arr
+};
 //获取链接用户
 const getLinkUser = socket => {
     return Object.keys(socket.adapter.rooms);
