@@ -107,5 +107,5 @@ function getIPAdress() {
         }
     }
 }
-server.listen(7005, "0.0.0.0");
+server.listen(7005, getIPAdress());
 // app.listen(8085, "192.168.0.184");
