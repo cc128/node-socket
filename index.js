@@ -8,34 +8,59 @@ const io = require("socket.io")(server);
 
 let videoData = []; //视频流
 let anchor = []; //视频主播id
-let userMsg = {};
+let userMsg = {}; //链接用户
+let ZBuser = {}; //主播用户
+let time = null;
 io.on("connection", socket => {
     socket.emit("socketId", socket.id);
-    //链接用户
     socket.on("userLink", data => {
         // if (data) {
         //     socket.join(data);
         // }
-        userMsg[data.name] = data.socketId;
-        // console.log(`${socket.id}已链接`, `共有${getLinkUser(socket)}`);
-        console.log(userMsg, getLinkUser(socket));
-        // Object.keys(userMsg).forEach(e => {
-
-        // })
-
+        console.log("链接")
+        if (data.isZB) {
+            ZBuser[data.socketId] = {
+                name: data.name,
+                id: data.socketId
+            };
+            ZBuser[data.socketId].videoData = []
+        } else {
+            userMsg[data.socketId] = {
+                name: data.name,
+                id: data.socketId
+            };
+            // if (Object.values(ZBuser)[0].videoData && Object.values(ZBuser)[0].videoData.length) {
+            //     console.log("发送")
+            //     Object.values(ZBuser)[0].videoData.forEach(e => {
+            //         socket.emit("videoData", {
+            //             video: e,
+            //             time: time || 0
+            //         });
+            //     })
+            // }
+        }
         io.emit("userList", filterUser(socket, userMsg));
-    });
-    // 启动呼叫
+    }); //链接用户
+    socket.on("videoStreaming", data => {
+        // time = data.time;
+        // ZBuser[data.socketId].videoData.push(data.video);
+        // Object.keys(userMsg).forEach(e => {
+        //     socket.to(e).emit("videoData", {
+        //         video: data.video,
+        //         time: time || 0
+        //     });
+        // })
+        // 发送视频流给被呼叫人
+        console.log(`接收并发送视频流给${data.receiveUserId}`);
+        socket.to(data.receiveUserId).emit("videoMsg", { video: data.video });
+    });// 接收客户端发来的视频消息
+
+
+
+
     socket.on("sendCall", data => {
-        // 给被呼叫人发消息
-        socket.to(data.called).emit("showCall", { ...data });
-        // console.log(`被呼叫用户${data.called},呼叫用户${data.callId}`);
-    });
-    // 主动挂断呼叫
-    socket.on("initiativeOverCall", data => {
-        socket.emit("secretMsg", { isConsent: false });
-    });
-    // 挂断呼叫
+        socket.to(data.called).emit("showCall", { ...data, name: userMsg[data.called].name });// 给被呼叫人发消息
+    }); // 启动呼叫
     socket.on("overCall", data => {
         socket.emit("secretMsg", { isConsent: false });
         if (data.state === 1) {
@@ -45,62 +70,38 @@ io.on("connection", socket => {
             // 被呼叫方挂断
             socket.to(data.callId).emit("secretMsg", { isConsent: false });
         }
-    });
-    //接受呼叫
+    }); // 挂断呼叫
     socket.on("tokeCall", data => {
         console.log(`接受${data.callId}呼叫`);
         socket.emit("secretMsg", { isConsent: true, sendVideoId: data.callId });
+        console.log(userMsg[data.called].name)
         socket.to(data.callId).emit("secretMsg", {
             isConsent: true,
-            sendVideoId: data.called
+            sendVideoId: data.called,
         });
-    });
-    // 接收客户端发来的视频消息
-    socket.on("videoStreaming", data => {
-        // 发送视频流给被呼叫人
-        console.log(`接收并发送视频流给${data.receiveUserId}`);
-        socket.to(data.receiveUserId).emit("videoMsg", { video: data.video });
-    });
-    let v1;
-    // 存储视频主播id
-    socket.on("anchor", id => {
-        anchor[0] = id;
-        // console.log(anchor[0], "anchor");
-        v1 = fs.createWriteStream(`./viedo2.mp4`);
-    });
-    // let v2 = fs.createReadStream("./zxy.mov"); //读取流
-    // setTimeout(() => {
-    //     v2.on("data", chunc => {
-    //         console.log(chunc);
-    //         socket.emit("sendVideo", { data: chunc });
-    //     });
-    // }, 1000);
+    }); //接受呼叫
 
-    let isOne = true;
 
-    // 主播断开连接
-    socket.on("offLink", data => {
-        // socket.leave(data);
-        // io.emit("userList", getLinkUser(socket));
-        console.log(`${data}离开了`, `还剩下${getLinkUser(socket)}`);
-        // v1.end();
-    });
+
     //客户端断开连接
-    socket.on("disconnect", socket => {
-        // io.emit("userList", filterUser);
-        console.log("用户已断开", socket);
+    socket.on("disconnect", err => {
+
+        io.emit("userList", filterUser(socket, userMsg));
+        // console.log("用户已断开");
     });
 });
 const filterUser = (socket, userMsg) => {
-    let arr = [];
-    getLinkUser(socket).forEach(e => {
-        Object.values(userMsg).forEach((q, i) => {
-            if (e === q) {
-                arr.push(Object.keys(userMsg)[i]);
-            }
-        });
-    });
-    return arr
+    Object.keys(userMsg).forEach((e, i) => {
+        if (!getLinkUser(socket).includes(e)) {
+            delete userMsg[Object.keys(userMsg)[i]]
+        }
+    })
+    Object.keys(ZBuser).forEach((e, i) => {
+        if (!getLinkUser(socket).includes(e)) {
+            delete ZBuser[Object.keys(ZBuser)[i]]
+        }
+    })
+    return Object.values(userMsg)
 };
 //获取链接用户
 const getLinkUser = socket => {
@@ -109,7 +110,6 @@ const getLinkUser = socket => {
 //获取本机ip地址
 function getIPAdress() {
     var interfaces = require("os").networkInterfaces();
-    // console.log(interfaces)
     for (var devName in interfaces) {
         var iface = interfaces[devName];
         for (var i = 0; i < iface.length; i++) {
