@@ -29,15 +29,19 @@ io.on("connection", socket => {
                 name: data.name,
                 id: data.socketId
             };
-            // if (Object.values(ZBuser)[0].videoData && Object.values(ZBuser)[0].videoData.length) {
-            //     console.log("发送")
-            //     Object.values(ZBuser)[0].videoData.forEach(e => {
-            //         socket.emit("videoData", {
-            //             video: e,
-            //             time: time || 0
-            //         });
-            //     })
-            // }
+            if (Object.values(ZBuser)[0] && Object.values(ZBuser)[0].videoData.length) {
+                console.log("发送头")
+                socket.emit("videoData", {
+                    video: Object.values(ZBuser)[0].videoData[0],
+                    time: 0
+                });
+                // Object.values(ZBuser)[0].videoData.forEach(e => {
+                //     socket.emit("videoData", {
+                //         video: e,
+                //         time: time || 0
+                //     });
+                // })
+            }
         }
         io.emit("userList", filterUser(socket, userMsg));
     }); //链接用户
@@ -54,6 +58,19 @@ io.on("connection", socket => {
         console.log(`接收并发送视频流给${data.receiveUserId}`);
         socket.to(data.receiveUserId).emit("videoMsg", { video: data.video });
     });// 接收客户端发来的视频消息
+    socket.on("liveVideoStreaming", data => {
+        // console.log(data)
+        // 时间
+        time = data.time;
+        ZBuser[data.socketId].videoData.push(data.video);
+        Object.keys(userMsg).forEach((e, i) => {
+            console.log(e, i, 222222)
+            socket.to(e).emit("videoData", {
+                video: data.video,
+                time: data.time
+            })
+        })
+    }); //接收直播视频流
 
 
 
