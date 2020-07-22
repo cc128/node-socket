@@ -7,6 +7,8 @@ const socket = server => {
         const videoCall = require("./video-call"); // ------------视频通话模块
         const live = require("./live"); // -----------------------直播模块
         socket.emit("socketId", socket.id); //--------------------给连接人发送他的id
+        live.openLive(socket);
+        console.log(111);
         socket.on("userLink", data => {
             setLinkUser(socket, data); //-------------------------存储-连接用户
             if (data.type === "视频语音") {
@@ -19,11 +21,10 @@ const socket = server => {
                 // list.forEach(e => {
                 //     e.videoData = [];
                 // });
-                // live.openLive(socket, list);
             }
             if (data.type === "看直播") {
                 let anchorList = tool.getUser(linkUser, "开直播", io, socket);
-                console.log(anchorList, 1111111)
+                console.log(anchorList, 1111111);
             }
         });
         //--------------------------------------------------------连接用户修改名称
