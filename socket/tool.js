@@ -7,14 +7,14 @@ const getUser = (linkUser, type, io, socket) => {
             io.to(e.socketId).emit("videoCallUserList", filterUser);
         });
     }
-    if (type === "开直播") {
-        filterUser.forEach(e => {
-            console.log(111)
-            io.to(e.socketId).emit("openLiveUserList", filterUser);
-        });
-    }
     return filterUser;
 };
+const sendUserList = (lookLiveUser, anchorList, io, socket) => {
+    lookLiveUser.forEach(e => {
+        io.to(e.socketId).emit("openLiveUserList", anchorList);
+    });
+};
 module.exports = {
-    getUser: getUser
+    getUser: getUser,
+    sendUserList: sendUserList
 };

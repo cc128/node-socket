@@ -1,14 +1,14 @@
 const socket = server => {
     let linkUser = {}; //----------------------------------------连接用户
     let anchorList = []; //--------------------------------------连接用户-开播列表
+    let lookLiveUser = []; //--------------------------------------连接用户-看直播的人
     const tool = require("./tool"); //---------------------------公共方法
     const io = require("socket.io")(server);
     io.on("connection", socket => {
         const videoCall = require("./video-call"); // ------------视频通话模块
         const live = require("./live"); // -----------------------直播模块
         socket.emit("socketId", socket.id); //--------------------给连接人发送他的id
-        live.openLive(socket);
-        console.log(111);
+        live.openLive(socket, linkUser, io, tool);
         socket.on("userLink", data => {
             setLinkUser(socket, data); //-------------------------存储-连接用户
             if (data.type === "视频语音") {
@@ -16,15 +16,12 @@ const socket = server => {
                 videoCall.videoCall(socket);
             }
             if (data.type === "开直播") {
-                // let list = tool.getUser(linkUser, "开直播", io, socket);
-                // tool.getUser(linkUser, "视频语音", io, socket);
-                // list.forEach(e => {
-                //     e.videoData = [];
-                // });
+                anchorList = tool.getUser(linkUser, "开直播", io, socket);
             }
             if (data.type === "看直播") {
-                let anchorList = tool.getUser(linkUser, "开直播", io, socket);
-                console.log(anchorList, 1111111);
+                anchorList = tool.getUser(linkUser, "开直播", io, socket);
+                lookLiveUser = tool.getUser(linkUser, "看直播", io, socket);
+                tool.sendUserList(lookLiveUser, anchorList, io, socket);
             }
         });
         //--------------------------------------------------------连接用户修改名称
