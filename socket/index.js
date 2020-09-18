@@ -30,6 +30,7 @@ const socket = server => {
         });
         //--------------------------------------------------------客户端断开连接
         socket.on("disconnect", err => {
+            console.log("离开", linkUser[socket.id])
             delete linkUser[socket.id]; //------------------------删除离开用户信息
             tool.getUser(linkUser, "视频语音", io, socket);
         });
@@ -45,6 +46,7 @@ const socket = server => {
             linkUser[socket.id] = {};
         }
         linkUser[socket.id] = data;
+        console.log("连接", linkUser[socket.id])
     };
     // const getLinkUser = socket => {
     //     return Object.keys(socket.adapter.rooms);
