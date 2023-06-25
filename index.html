@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cc</title>
+</head>
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    html,
+    body,
+    iframe {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+
+<body>
+    123123
+</body>
+<script>
+    let socket = io.connect("http://192.168.2.121:7005");
+    let socketId;
+    let name;
+    //获取自己的id
+    socket.on("socketId", socketId => {
+        console.log(socketId, 11111)
+        localStorage.setItem("socketId", socketId);
+        localStorage.setItem("name", socketId);
+        setName()
+        // socketId = socketId;
+        // console.log(socketId, 444444)
+        // this.$socket.emit("userLink", {
+        //     name: name,
+        //     socketId: socketId,
+        // })
+    });
+    // 存储名字
+    function setName() {
+        var x;
+        var person = prompt("请输入你的名字", "王老五");
+        if (person != null && person != "") {
+            x = "你好 " + person + "! 今天感觉如何?";
+            document.getElementById("demo").innerHTML = x;
+        } else {
+        }
+    }
+</script>
+
+</html>
